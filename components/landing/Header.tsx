@@ -10,8 +10,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
 import Logo from "../common/logo";
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 
 // Navigation links array to be used in both desktop and mobile menus
 const navigationLinks = [
@@ -106,17 +112,23 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <SignedOut>
             <SignInButton mode="modal">
-              <Button variant="ghost" size="sm" className="text-sm">Sign In</Button>
+              <Button variant="ghost" size="sm" className="text-sm">
+                Sign In
+              </Button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <Button size="sm" className="text-sm">Get Started</Button>
+              <Button size="sm" className="text-sm">
+                Get Started
+              </Button>
             </SignUpButton>
           </SignedOut>
           <SignedIn>
             <Button asChild variant="ghost" size="sm" className="text-sm">
               <a href="/dashboard">Dashboard</a>
             </Button>
-            <UserButton appearance={{ elements: { userButtonPopoverCard: "border" } }} />
+            <UserButton
+              appearance={{ elements: { userButtonPopoverCard: "border" } }}
+            />
           </SignedIn>
         </div>
       </div>

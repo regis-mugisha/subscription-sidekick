@@ -29,7 +29,6 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          {/* Header is rendered inside pages (components/landing/Header) */}
           {children}
         </body>
       </html>

@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { SignUpButton } from "@clerk/nextjs";
+import { Button } from "../ui/button";
 
 export function BottomCTA() {
   return (
@@ -12,9 +12,11 @@ export function BottomCTA() {
           Start free—set up takes minutes, and you can cancel anytime.
         </p>
         <div className="mt-6">
-          <Button size="lg" asChild>
-            <Link href="/sign-up">Sign Up Free</Link>
-          </Button>
+          <SignUpButton mode="modal">
+            <Button size="lg" className="text-sm">
+              Sign Up Free
+            </Button>
+          </SignUpButton>
         </div>
       </div>
     </section>

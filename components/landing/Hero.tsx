@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { SignUpButton } from "@clerk/nextjs";
 
 export function Hero() {
   return (
@@ -18,9 +18,11 @@ export function Hero() {
         reminders, and highlights what to cancel.
       </p>
       <div className="mt-8 flex items-center justify-center gap-3">
-        <Button size="lg" asChild>
-          <Link href="/sign-up">Get Started</Link>
-        </Button>
+        <SignUpButton mode="modal">
+          <Button size="lg" className="text-sm">
+            Get Started
+          </Button>
+        </SignUpButton>
         <Button size="lg" variant="outline" asChild>
           <a href="#features">See Features</a>
         </Button>
