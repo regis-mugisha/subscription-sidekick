@@ -1,9 +1,33 @@
 import { db } from "@/db/drizzle";
 import { subscription } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function GET() {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Fetch subscriptions for the current user
+    const userSubscriptions = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.userId, userId));
+
+    return NextResponse.json({ subscriptions: userSubscriptions });
+  } catch (error) {
+    console.error("GET /api/subscriptions error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
