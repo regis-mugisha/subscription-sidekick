@@ -34,34 +34,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useUser } from "@clerk/nextjs";
 import { EllipsisVertical, LoaderCircleIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function Dashboard() {
-  const [monthlyExpenditure, setMonthlyExpenditure] = useState(0);
   const { user } = useUser();
   const firstName = user?.firstName ?? "there";
 
-  const { subscriptions, loading, error, fetchSubscriptions } =
-    useSubscriptionStore();
+  const {
+    subscriptions,
+    monthlyExpenditure,
+    loading,
+    error,
+    fetchSubscriptions,
+    getMonthlyExpenditure,
+  } = useSubscriptionStore();
   const isFetching = loading === "fetching";
 
-  const getMonthlyExpenditure = async () => {
-    try {
-      const res = await fetch("/api/subscriptions/monthly-total");
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch monthly expenditure");
-      }
-      const data = await res.json();
-      setMonthlyExpenditure(data.monthlyExpenditure || 0);
-    } catch (error) {
-      console.error("Error fetching monthly expenditure:", error);
-    }
-  };
   useEffect(() => {
     getMonthlyExpenditure();
     fetchSubscriptions();
-  }, [fetchSubscriptions]);
+  }, [fetchSubscriptions, getMonthlyExpenditure]);
 
   return (
     <div className="space-y-6 pt-4 md:pt-6">

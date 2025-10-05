@@ -16,6 +16,7 @@ type SubscriptionState = {
   loading: "idle" | "fetching" | "creating";
   error: string | null;
   isModalOpen: boolean;
+  monthlyExpenditure: number;
 };
 
 type SubscriptionActions = {
@@ -25,6 +26,7 @@ type SubscriptionActions = {
   createSubscription: (
     newSubscription: Omit<Subscription, "id">
   ) => Promise<void>;
+  getMonthlyExpenditure: () => Promise<void>;
 };
 
 export const useSubscriptionStore = create<
@@ -35,6 +37,7 @@ export const useSubscriptionStore = create<
   loading: "idle",
   error: null,
   isModalOpen: false,
+  monthlyExpenditure: 0,
 
   // ACTIONS
   openModal: () => set({ isModalOpen: true }),
@@ -80,11 +83,25 @@ export const useSubscriptionStore = create<
       toast.success("Subscription added");
       get().closeModal();
       await get().fetchSubscriptions();
+      await get().getMonthlyExpenditure();
     } catch (err) {
       console.error(err);
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       set({ loading: "idle" });
+    }
+  },
+  getMonthlyExpenditure: async () => {
+    try {
+      const res = await fetch("/api/subscriptions/monthly-total");
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch monthly expenditure");
+      }
+      const data = await res.json();
+      set({ monthlyExpenditure: data.monthlyExpenditure || 0 });
+    } catch (error) {
+      console.error("Error fetching monthly expenditure:", error);
     }
   },
 }));
