@@ -11,14 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -26,17 +18,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -48,106 +31,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserButton, useUser } from "@clerk/nextjs";
-import { EllipsisVertical, LoaderCircleIcon, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useSubscriptionStore } from "@/store/subscriptionStore";
+import { useUser } from "@clerk/nextjs";
+import { EllipsisVertical, LoaderCircleIcon } from "lucide-react";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   const { user } = useUser();
   const firstName = user?.firstName ?? "there";
-  const [open, setOpen] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  type SubscriptionRow = {
-    id?: string;
-    service: string;
-    plan: string | null;
-    status: string | null;
-    renewalDate: string;
-    amount?: number | null;
-  };
-
-  const [subscriptions, setSubscriptions] = useState<SubscriptionRow[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-
-  // Minimal form state for creating a subscription (essential fields)
-  const [service, setService] = useState("");
-  const [plan, setPlan] = useState("");
-  const [amount, setAmount] = useState("");
-  const [billingCycle, setBillingCycle] = useState("monthly");
-  const [status, setStatus] = useState("active");
-  const [renewalDate, setRenewalDate] = useState("");
-
-  function resetForm() {
-    setService("");
-    setPlan("");
-    setAmount("");
-    setBillingCycle("monthly");
-    setStatus("active");
-    setRenewalDate("");
-  }
-
-  async function fetchSubscriptions() {
-    setIsFetching(true);
-    setFetchError(null);
-    try {
-      const res = await fetch("/api/subscriptions");
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || `Failed to load (${res.status})`);
-      }
-      const data = await res.json();
-      setSubscriptions(
-        Array.isArray(data?.subscriptions) ? data.subscriptions : []
-      );
-    } catch (err) {
-      console.error(err);
-      setFetchError((err as Error).message);
-    } finally {
-      setIsFetching(false);
-    }
-  }
+  const { subscriptions, loading, error, fetchSubscriptions } =
+    useSubscriptionStore();
+  const isFetching = loading === "fetching";
 
   useEffect(() => {
     fetchSubscriptions();
-  }, []);
-
-  async function handleCreate() {
-    setIsLoading(true);
-    try {
-      const amountValue = parseFloat(amount);
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          service,
-          plan,
-          amount: amountValue,
-          billingCycle,
-          status,
-          renewalDate,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data?.error || "Failed to save");
-        return;
-      }
-
-      setOpen(false);
-      resetForm();
-      toast.success("Subscription added");
-      await fetchSubscriptions();
-    } catch (err) {
-      console.error(err);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  }, [fetchSubscriptions]);
 
   return (
     <div className="space-y-6 pt-4 md:pt-6">
@@ -159,123 +58,6 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">
             Here’s what’s happening with your subscriptions
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                New Subscription
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Add Subscription</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-sm">Service</Label>
-                  <Input
-                    placeholder="e.g. Netflix"
-                    value={service}
-                    onChange={(e) => setService(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Plan</Label>
-                  <Input
-                    placeholder="e.g. Premium"
-                    value={plan}
-                    onChange={(e) => setPlan(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Amount (USD)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g. 15.99"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">Billing Cycle</Label>
-                  <Select
-                    value={billingCycle}
-                    onValueChange={(value: string) => setBillingCycle(value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Monthly" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="quarterly">Quarterly</SelectItem>
-                      <SelectItem value="yearly">Yearly</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm">Status</Label>
-                  <Select
-                    value={status}
-                    onValueChange={(value: string) => setStatus(value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Active" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="trial">Trial</SelectItem>
-                      <SelectItem value="paused">Paused</SelectItem>
-                      <SelectItem value="canceled">Canceled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm">Next Renewal</Label>
-                  <Input
-                    type="date"
-                    value={renewalDate}
-                    onChange={(e) => setRenewalDate(e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setOpen(false);
-                    resetForm();
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreate}
-                  disabled={!service || !amount || !renewalDate || isLoading}
-                  data-loading={isLoading || undefined}
-                  className="group relative disabled:opacity-100"
-                >
-                  <span className="group-data-loading:text-transparent">
-                    Save
-                  </span>
-                  {isLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <LoaderCircleIcon
-                        className="animate-spin"
-                        size={16}
-                        aria-hidden="true"
-                      />
-                    </div>
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <UserButton />
         </div>
       </div>
 
@@ -369,28 +151,24 @@ export default function Dashboard() {
                         </TableCell>
                       </TableRow>
                     )}
-                    {!isFetching && fetchError && (
+                    {!isFetching && error && (
                       <TableRow>
                         <TableCell colSpan={5}>
-                          <div className="text-sm text-red-600">
-                            {fetchError}
+                          <div className="text-sm text-red-600">{error}</div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {!isFetching && !error && subscriptions.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5}>
+                          <div className="text-sm text-muted-foreground">
+                            No subscriptions yet.
                           </div>
                         </TableCell>
                       </TableRow>
                     )}
                     {!isFetching &&
-                      !fetchError &&
-                      subscriptions.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5}>
-                            <div className="text-sm text-muted-foreground">
-                              No subscriptions yet.
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    {!isFetching &&
-                      !fetchError &&
+                      !error &&
                       subscriptions.map((s, idx) => {
                         const serviceInitials = (s.service || "?")
                           .slice(0, 2)
