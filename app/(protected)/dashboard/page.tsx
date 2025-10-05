@@ -51,6 +51,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { EllipsisVertical, LoaderCircleIcon, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -99,7 +100,9 @@ export default function Dashboard() {
         throw new Error(data?.error || `Failed to load (${res.status})`);
       }
       const data = await res.json();
-      setSubscriptions(Array.isArray(data?.subscriptions) ? data.subscriptions : []);
+      setSubscriptions(
+        Array.isArray(data?.subscriptions) ? data.subscriptions : []
+      );
     } catch (err) {
       console.error(err);
       setFetchError((err as Error).message);
@@ -130,15 +133,17 @@ export default function Dashboard() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || "Failed to save");
+        toast.error(data?.error || "Failed to save");
+        return;
       }
 
       setOpen(false);
       resetForm();
+      toast.success("Subscription added");
       await fetchSubscriptions();
     } catch (err) {
       console.error(err);
-      // keep dialog open for correction in case of error
+      toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -355,7 +360,10 @@ export default function Dashboard() {
                       <TableRow>
                         <TableCell colSpan={5}>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <LoaderCircleIcon className="animate-spin" size={16} />
+                            <LoaderCircleIcon
+                              className="animate-spin"
+                              size={16}
+                            />
                             Loading subscriptions...
                           </div>
                         </TableCell>
@@ -364,69 +372,90 @@ export default function Dashboard() {
                     {!isFetching && fetchError && (
                       <TableRow>
                         <TableCell colSpan={5}>
-                          <div className="text-sm text-red-600">{fetchError}</div>
+                          <div className="text-sm text-red-600">
+                            {fetchError}
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
-                    {!isFetching && !fetchError && subscriptions.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <div className="text-sm text-muted-foreground">No subscriptions yet.</div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {!isFetching && !fetchError && subscriptions.map((s, idx) => {
-                      const serviceInitials = (s.service || "?").slice(0, 2).toUpperCase();
-                      const statusLabel = s.status ?? "unknown";
-                      const renewalLabel = s.renewalDate ? new Date(s.renewalDate).toLocaleDateString() : "-";
-                      return (
-                        <TableRow key={(s.id ?? `${s.service}-${idx}`)}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src="" alt="" />
-                                <AvatarFallback>{serviceInitials}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{s.service}</div>
-                                {s.amount != null && (
-                                  <div className="text-xs text-muted-foreground">
-                                    ${typeof s.amount === "number" ? s.amount.toFixed(2) : s.amount}/mo
-                                  </div>
-                                )}
-                              </div>
+                    {!isFetching &&
+                      !fetchError &&
+                      subscriptions.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5}>
+                            <div className="text-sm text-muted-foreground">
+                              No subscriptions yet.
                             </div>
                           </TableCell>
-                          <TableCell>{s.plan ?? "-"}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{statusLabel}</Badge>
-                          </TableCell>
-                          <TableCell>{renewalLabel}</TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <EllipsisVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>View</DropdownMenuItem>
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600">
-                                  Cancel
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
                         </TableRow>
-                      );
-                    })}
+                      )}
+                    {!isFetching &&
+                      !fetchError &&
+                      subscriptions.map((s, idx) => {
+                        const serviceInitials = (s.service || "?")
+                          .slice(0, 2)
+                          .toUpperCase();
+                        const statusLabel = s.status ?? "unknown";
+                        const renewalLabel = s.renewalDate
+                          ? new Date(s.renewalDate).toLocaleDateString()
+                          : "-";
+                        return (
+                          <TableRow key={s.id ?? `${s.service}-${idx}`}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src="" alt="" />
+                                  <AvatarFallback>
+                                    {serviceInitials}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-medium">{s.service}</div>
+                                  {s.amount != null && (
+                                    <div className="text-xs text-muted-foreground">
+                                      $
+                                      {typeof s.amount === "number"
+                                        ? s.amount.toFixed(2)
+                                        : s.amount}
+                                      /mo
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{s.plan ?? "-"}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{statusLabel}</Badge>
+                            </TableCell>
+                            <TableCell>{renewalLabel}</TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                  >
+                                    <EllipsisVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-40"
+                                >
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem>View</DropdownMenuItem>
+                                  <DropdownMenuItem>Edit</DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-600">
+                                    Cancel
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                   </TableBody>
                 </Table>
               </CardContent>
