@@ -17,6 +17,7 @@ type SubscriptionState = {
   error: string | null;
   isModalOpen: boolean;
   monthlyExpenditure: number;
+  activeSubscriptions: Subscription[];
 };
 
 type SubscriptionActions = {
@@ -27,6 +28,7 @@ type SubscriptionActions = {
     newSubscription: Omit<Subscription, "id">
   ) => Promise<void>;
   getMonthlyExpenditure: () => Promise<void>;
+  getActiveSubscriptions: () => Promise<void>;
 };
 
 export const useSubscriptionStore = create<
@@ -38,6 +40,7 @@ export const useSubscriptionStore = create<
   error: null,
   isModalOpen: false,
   monthlyExpenditure: 0,
+  activeSubscriptions: [],
 
   // ACTIONS
   openModal: () => set({ isModalOpen: true }),
@@ -92,6 +95,7 @@ export const useSubscriptionStore = create<
     }
   },
   getMonthlyExpenditure: async () => {
+    set({ loading: "fetching" });
     try {
       const res = await fetch("/api/subscriptions/monthly-total");
 
@@ -102,6 +106,23 @@ export const useSubscriptionStore = create<
       set({ monthlyExpenditure: data.monthlyExpenditure || 0 });
     } catch (error) {
       console.error("Error fetching monthly expenditure:", error);
+    } finally {
+      set({ loading: "idle" });
+    }
+  },
+  getActiveSubscriptions: async () => {
+    set({ loading: "fetching" });
+    try {
+      const res = await fetch("/api/subscriptions/active");
+      if (!res.ok) {
+        throw new Error("Failed to fetch active subscriptions");
+      }
+      const data = await res.json();
+      set({ activeSubscriptions: data.subscriptions || [] });
+    } catch (error) {
+      console.error("Error fetching active subscriptions:", error);
+    } finally {
+      set({ loading: "idle" });
     }
   },
 }));
