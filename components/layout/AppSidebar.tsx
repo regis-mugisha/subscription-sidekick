@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { SignOutButton } from "@clerk/nextjs";
 import {
   ChartNoAxesCombined,
@@ -10,6 +8,8 @@ import {
   LogOut,
   RefreshCcw,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Logo from "../common/logo";
 import { Button } from "../ui/button";
 import {
@@ -36,17 +36,20 @@ export default function AppSideBar() {
   return (
     <Sidebar className="bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-r dark:bg-neutral-950/60 dark:border-neutral-800">
       <SidebarHeader className="flex-row items-center h-16 px-4 border-b dark:border-neutral-800 relative">
-        <div className="flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
-          <Logo />
-          <span className="font-semibold tracking-tight">SubBuddy</span>
-        </div>
+        <Link href={"/dashboard"}>
+          <div className="flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
+            <Logo />
+            <span className="font-semibold tracking-tight">SubBuddy</span>
+          </div>
+        </Link>
         <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-neutral-300/70 to-transparent dark:via-neutral-700/70" />
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-2">
         <SidebarMenu>
           {menuItems.map((item) => {
-            const active = pathname === item.url || pathname.startsWith(item.url + "/");
+            const active =
+              pathname === item.url || pathname.startsWith(item.url + "/");
             const Icon = item.icon;
 
             return (
