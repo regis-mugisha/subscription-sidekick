@@ -43,17 +43,20 @@ export default function Dashboard() {
   const {
     subscriptions,
     monthlyExpenditure,
+    activeSubscriptions,
     loading,
     error,
     fetchSubscriptions,
     getMonthlyExpenditure,
+    getActiveSubscriptions,
   } = useSubscriptionStore();
   const isFetching = loading === "fetching";
 
   useEffect(() => {
     getMonthlyExpenditure();
+    getActiveSubscriptions();
     fetchSubscriptions();
-  }, [fetchSubscriptions, getMonthlyExpenditure]);
+  }, [fetchSubscriptions, getMonthlyExpenditure, getActiveSubscriptions]);
 
   return (
     <div className="space-y-6 pt-4 md:pt-6">
@@ -72,7 +75,13 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Spend (Monthly)</CardDescription>
-            <CardTitle className="text-2xl">{`$${monthlyExpenditure}`}</CardTitle>
+            <CardTitle className="text-2xl">
+              {isFetching ? (
+                <LoaderCircleIcon className="animate-spin" size={24} />
+              ) : (
+                `$${monthlyExpenditure}`
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs text-muted-foreground">
@@ -87,7 +96,13 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Active Subscriptions</CardDescription>
-            <CardTitle className="text-2xl">18</CardTitle>
+            <CardTitle className="text-2xl">
+              {isFetching ? (
+                <LoaderCircleIcon className="animate-spin" size={24} />
+              ) : (
+                activeSubscriptions.length
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Badge variant="secondary">3 trials</Badge>
