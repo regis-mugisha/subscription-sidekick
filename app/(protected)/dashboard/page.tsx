@@ -30,11 +30,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+ 
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useUser } from "@clerk/nextjs";
-import { EllipsisVertical, LoaderCircleIcon } from "lucide-react";
-import { useEffect } from "react";
+import { EllipsisVertical } from "lucide-react";
+import { useEffect, useMemo } from "react";
 
 export default function Dashboard() {
   const { user } = useUser();
@@ -51,6 +51,37 @@ export default function Dashboard() {
     getActiveSubscriptions,
   } = useSubscriptionStore();
   const isFetching = loading === "fetching";
+
+  const upcomingRenewalsCount = useMemo(() => {
+    const now = new Date();
+    return subscriptions.filter((s) => {
+      if (!s.renewalDate) return false;
+      const d = new Date(s.renewalDate);
+      const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays >= 3 && diffDays <= 5;
+    }).length;
+  }, [subscriptions]);
+
+  const monthProgress = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth(); // 0-indexed
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    const today = now.getDate();
+    return Math.min(100, Math.max(0, Math.round((today / totalDays) * 100)));
+  }, []);
+
+  // Derive next-30-days renewals count if needed later
+  // const upcomingRenewalsCount = useMemo(() => {
+  //   const now = new Date();
+  //   const in30d = new Date();
+  //   in30d.setDate(now.getDate() + 30);
+  //   return subscriptions.filter((s) => {
+  //     if (!s.renewalDate) return false;
+  //     const d = new Date(s.renewalDate);
+  //     return d >= now && d <= in30d;
+  //   }).length;
+  // }, [subscriptions]);
 
   useEffect(() => {
     getMonthlyExpenditure();
@@ -71,25 +102,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Spend (Monthly)</CardDescription>
             <CardTitle className="text-2xl">
-              {isFetching ? (
-                <LoaderCircleIcon className="animate-spin" size={24} />
-              ) : (
-                `$${monthlyExpenditure}`
-              )}
+              {isFetching ? <Skeleton className="h-7 w-24" /> : `$${monthlyExpenditure}`}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-xs text-muted-foreground">
-              <span className="text-green-600 dark:text-green-400 font-medium">
-                +4.2%
-              </span>{" "}
-              from last month
-            </div>
+            {/* intentionally minimal footer */}
           </CardContent>
         </Card>
 
@@ -97,22 +119,20 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardDescription>Active Subscriptions</CardDescription>
             <CardTitle className="text-2xl">
-              {isFetching ? (
-                <LoaderCircleIcon className="animate-spin" size={24} />
-              ) : (
-                activeSubscriptions.length
-              )}
+              {isFetching ? <Skeleton className="h-7 w-12" /> : activeSubscriptions.length}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge variant="secondary">3 trials</Badge>
+            {/* intentionally minimal footer */}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Upcoming Renewals (30d)</CardDescription>
-            <CardTitle className="text-2xl">6</CardTitle>
+            <CardDescription>Upcoming Renewals (3–5d)</CardDescription>
+            <CardTitle className="text-2xl">
+              {isFetching ? <Skeleton className="h-7 w-10" /> : upcomingRenewalsCount}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Progress value={45} className="h-2" />
@@ -121,25 +141,10 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Failed Payments (7d)</CardDescription>
-            <CardTitle className="text-2xl">2</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge variant="destructive">Attention</Badge>
-          </CardContent>
-        </Card>
+        
       </section>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
+      <div className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -163,12 +168,10 @@ export default function Dashboard() {
                     {isFetching && (
                       <TableRow>
                         <TableCell colSpan={5}>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <LoaderCircleIcon
-                              className="animate-spin"
-                              size={16}
-                            />
-                            Loading subscriptions...
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-16" />
                           </div>
                         </TableCell>
                       </TableRow>
@@ -264,69 +267,64 @@ export default function Dashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Upcoming Renewals</CardTitle>
-                <CardDescription>Next 14 days</CardDescription>
+                <CardDescription>Next 3–5 days</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[340px] pr-4">
                   <div className="space-y-4">
-                    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src="" alt="" />
-                            <AvatarFallback>NF</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">Netflix</div>
-                            <div className="text-xs text-muted-foreground">
-                              $15.99/mo
+                    {subscriptions
+                      .filter((s) => {
+                        if (!s.renewalDate) return false;
+                        const now = new Date();
+                        const d = new Date(s.renewalDate);
+                        const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        return diffDays >= 3 && diffDays <= 5;
+                      })
+                      .sort((a, b) =>
+                        new Date(a.renewalDate).getTime() -
+                        new Date(b.renewalDate).getTime()
+                      )
+                      .slice(0, 8)
+                      .map((s, idx) => {
+                        const initials = (s.service || "?").slice(0, 2).toUpperCase();
+                        const amountLabel =
+                          s.amount != null
+                            ? `$${typeof s.amount === "number" ? s.amount.toFixed(2) : s.amount}`
+                            : "-";
+                        const daysAway = (() => {
+                          const now = new Date();
+                          const d = new Date(s.renewalDate!);
+                          return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        })();
+                        return (
+                          <div key={s.id ?? `${s.service}-${idx}`} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src="" alt="" />
+                                <AvatarFallback>{initials}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{s.service}</div>
+                                <div className="text-xs text-muted-foreground">{amountLabel}/mo</div>
+                              </div>
                             </div>
+                            <div className="text-sm">in {daysAway} days</div>
                           </div>
-                        </div>
-                        <div className="text-sm">in {i} days</div>
-                      </div>
-                    ))}
+                        );
+                      })}
                   </div>
                 </ScrollArea>
                 <Separator className="my-4" />
                 <div>
                   <div className="mb-2 text-sm text-muted-foreground">
-                    This month progress
+                    {monthProgress}% of this month processed
                   </div>
-                  <Progress value={62} className="h-2" />
+                  <Progress value={monthProgress} className="h-2" />
                 </div>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="activity">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>
-                Subscription changes and system events
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <div className="space-y-1">
-                      <div className="h-4 w-[240px] rounded bg-muted" />
-                      <div className="h-3 w-[180px] rounded bg-muted/70" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
     </div>
   );
 }
