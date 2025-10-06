@@ -14,10 +14,11 @@ export async function GET() {
     // Fetch total monthly amount for the current user
     const monthlyTotal = sql<number>`
     CASE
-        WHEN ${subscription.billingCycle} = 'weekly' THEN (${subscription.amount} * 4)
+        WHEN ${subscription.billingCycle} = 'monthly' THEN (${subscription.amount})
+        WHEN ${subscription.billingCycle} = 'weekly' THEN ((${subscription.amount} * 52) / 12)
         WHEN ${subscription.billingCycle} = 'quarterly' THEN (${subscription.amount} / 3)
         WHEN ${subscription.billingCycle} = 'yearly' THEN (${subscription.amount} / 12)
-        ELSE ${subscription.amount}
+        ELSE 0
     END
 `;
 
