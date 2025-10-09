@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
- 
+
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { useUser } from "@clerk/nextjs";
 import { EllipsisVertical } from "lucide-react";
@@ -57,7 +57,9 @@ export default function Dashboard() {
     return subscriptions.filter((s) => {
       if (!s.renewalDate) return false;
       const d = new Date(s.renewalDate);
-      const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil(
+        (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
       return diffDays >= 3 && diffDays <= 5;
     }).length;
   }, [subscriptions]);
@@ -107,31 +109,39 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardDescription>Total Spend (Monthly)</CardDescription>
             <CardTitle className="text-2xl">
-              {isFetching ? <Skeleton className="h-7 w-24" /> : `$${monthlyExpenditure}`}
+              {isFetching ? (
+                <Skeleton className="h-7 w-24" />
+              ) : (
+                `$${monthlyExpenditure}`
+              )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {/* intentionally minimal footer */}
-          </CardContent>
+          <CardContent>{/* intentionally minimal footer */}</CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Active Subscriptions</CardDescription>
             <CardTitle className="text-2xl">
-              {isFetching ? <Skeleton className="h-7 w-12" /> : activeSubscriptions.length}
+              {isFetching ? (
+                <Skeleton className="h-7 w-12" />
+              ) : (
+                activeSubscriptions.length
+              )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {/* intentionally minimal footer */}
-          </CardContent>
+          <CardContent>{/* intentionally minimal footer */}</CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Upcoming Renewals (3–5d)</CardDescription>
+            <CardDescription>Upcoming Renewals (7d)</CardDescription>
             <CardTitle className="text-2xl">
-              {isFetching ? <Skeleton className="h-7 w-10" /> : upcomingRenewalsCount}
+              {isFetching ? (
+                <Skeleton className="h-7 w-10" />
+              ) : (
+                upcomingRenewalsCount
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -141,190 +151,202 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        
       </section>
 
       <div className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Recent Subscriptions</CardTitle>
-                <CardDescription>
-                  Latest subscriptions added or updated
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Recent Subscriptions</CardTitle>
+              <CardDescription>
+                Latest subscriptions added or updated
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Next Renewal</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isFetching && (
                     <TableRow>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Next Renewal</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableCell colSpan={5}>
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-4 w-40" />
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-16" />
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isFetching && (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <div className="flex items-center gap-3">
-                            <Skeleton className="h-4 w-40" />
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-4 w-16" />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {!isFetching && error && (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <div className="text-sm text-red-600">{error}</div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {!isFetching && !error && subscriptions.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <div className="text-sm text-muted-foreground">
-                            No subscriptions yet.
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {!isFetching &&
-                      !error &&
-                      subscriptions.map((s, idx) => {
-                        const serviceInitials = (s.service || "?")
-                          .slice(0, 2)
-                          .toUpperCase();
-                        const statusLabel = s.status ?? "unknown";
-                        const renewalLabel = s.renewalDate
-                          ? new Date(s.renewalDate).toLocaleDateString()
-                          : "-";
-                        return (
-                          <TableRow key={s.id ?? `${s.service}-${idx}`}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src="" alt="" />
-                                  <AvatarFallback>
-                                    {serviceInitials}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium">{s.service}</div>
-                                  {s.amount != null && (
-                                    <div className="text-xs text-muted-foreground">
-                                      $
-                                      {typeof s.amount === "number"
-                                        ? s.amount.toFixed(2)
-                                        : s.amount}
-                                      /mo
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>{s.plan ?? "-"}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">{statusLabel}</Badge>
-                            </TableCell>
-                            <TableCell>{renewalLabel}</TableCell>
-                            <TableCell className="text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                  >
-                                    <EllipsisVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  align="end"
-                                  className="w-40"
-                                >
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem>View</DropdownMenuItem>
-                                  <DropdownMenuItem>Edit</DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-600">
-                                    Cancel
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Upcoming Renewals</CardTitle>
-                <CardDescription>Next 3–5 days</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[340px] pr-4">
-                  <div className="space-y-4">
-                    {subscriptions
-                      .filter((s) => {
-                        if (!s.renewalDate) return false;
-                        const now = new Date();
-                        const d = new Date(s.renewalDate);
-                        const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                        return diffDays >= 3 && diffDays <= 5;
-                      })
-                      .sort((a, b) =>
-                        new Date(a.renewalDate).getTime() -
-                        new Date(b.renewalDate).getTime()
-                      )
-                      .slice(0, 8)
-                      .map((s, idx) => {
-                        const initials = (s.service || "?").slice(0, 2).toUpperCase();
-                        const amountLabel =
-                          s.amount != null
-                            ? `$${typeof s.amount === "number" ? s.amount.toFixed(2) : s.amount}`
-                            : "-";
-                        const daysAway = (() => {
-                          const now = new Date();
-                          const d = new Date(s.renewalDate!);
-                          return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                        })();
-                        return (
-                          <div key={s.id ?? `${s.service}-${idx}`} className="flex items-center justify-between">
+                  )}
+                  {!isFetching && error && (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <div className="text-sm text-red-600">{error}</div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!isFetching && !error && subscriptions.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <div className="text-sm text-muted-foreground">
+                          No subscriptions yet.
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!isFetching &&
+                    !error &&
+                    subscriptions.map((s, idx) => {
+                      const serviceInitials = (s.service || "?")
+                        .slice(0, 2)
+                        .toUpperCase();
+                      const statusLabel = s.status ?? "unknown";
+                      const renewalLabel = s.renewalDate
+                        ? new Date(s.renewalDate).toLocaleDateString()
+                        : "-";
+                      return (
+                        <TableRow key={s.id ?? `${s.service}-${idx}`}>
+                          <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src="" alt="" />
-                                <AvatarFallback>{initials}</AvatarFallback>
+                                <AvatarFallback>
+                                  {serviceInitials}
+                                </AvatarFallback>
                               </Avatar>
                               <div>
                                 <div className="font-medium">{s.service}</div>
-                                <div className="text-xs text-muted-foreground">{amountLabel}/mo</div>
+                                {s.amount != null && (
+                                  <div className="text-xs text-muted-foreground">
+                                    $
+                                    {typeof s.amount === "number"
+                                      ? s.amount.toFixed(2)
+                                      : s.amount}
+                                    /mo
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            <div className="text-sm">in {daysAway} days</div>
-                          </div>
+                          </TableCell>
+                          <TableCell>{s.plan ?? "-"}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{statusLabel}</Badge>
+                          </TableCell>
+                          <TableCell>{renewalLabel}</TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  <EllipsisVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>View</DropdownMenuItem>
+                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600">
+                                  Cancel
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Upcoming Renewals</CardTitle>
+              <CardDescription>Next 7 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[340px] pr-4">
+                <div className="space-y-4">
+                  {subscriptions
+                    .filter((s) => {
+                      if (!s.renewalDate) return false;
+                      const now = new Date();
+                      const d = new Date(s.renewalDate);
+                      const diffDays = Math.ceil(
+                        (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+                      );
+                      return diffDays <= 7;
+                    })
+                    .sort(
+                      (a, b) =>
+                        new Date(a.renewalDate).getTime() -
+                        new Date(b.renewalDate).getTime()
+                    )
+                    .slice(0, 8)
+                    .map((s, idx) => {
+                      const initials = (s.service || "?")
+                        .slice(0, 2)
+                        .toUpperCase();
+                      const amountLabel =
+                        s.amount != null
+                          ? `$${
+                              typeof s.amount === "number"
+                                ? s.amount.toFixed(2)
+                                : s.amount
+                            }`
+                          : "-";
+                      const daysAway = (() => {
+                        const now = new Date();
+                        const d = new Date(s.renewalDate!);
+                        return Math.ceil(
+                          (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
                         );
-                      })}
-                  </div>
-                </ScrollArea>
-                <Separator className="my-4" />
-                <div>
-                  <div className="mb-2 text-sm text-muted-foreground">
-                    {monthProgress}% of this month processed
-                  </div>
-                  <Progress value={monthProgress} className="h-2" />
+                      })();
+                      return (
+                        <div
+                          key={s.id ?? `${s.service}-${idx}`}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src="" alt="" />
+                              <AvatarFallback>{initials}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{s.service}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {amountLabel}/mo
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-sm">in {daysAway} days</div>
+                        </div>
+                      );
+                    })}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </ScrollArea>
+              <Separator className="my-4" />
+              <div>
+                <div className="mb-2 text-sm text-muted-foreground">
+                  {monthProgress}% of this month processed
+                </div>
+                <Progress value={monthProgress} className="h-2" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </div>
     </div>
   );
 }
