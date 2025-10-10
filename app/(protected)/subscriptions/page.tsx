@@ -30,6 +30,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { EllipsisVertical, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+// duplicate import removed
+import { Label } from "@/components/ui/label";
 
 export default function SubscriptionsPage() {
 	const {
@@ -37,6 +45,8 @@ export default function SubscriptionsPage() {
 		loading,
 		error,
 		fetchSubscriptions,
+		updateSubscription,
+		cancelSubscription,
 	} = useSubscriptionStore();
 	const isFetching = loading === "fetching";
 
@@ -45,9 +55,48 @@ export default function SubscriptionsPage() {
 	const [status, setStatus] = useState<string | "all">("all");
 	const [billingCycle, setBillingCycle] = useState<string | "all">("all");
 
+	// Local state for dialogs
+	const [viewing, setViewing] = useState<typeof subscriptions[number] | null>(null);
+	const [editing, setEditing] = useState<typeof subscriptions[number] | null>(null);
+	const [confirmCancel, setConfirmCancel] = useState<typeof subscriptions[number] | null>(null);
+	const [editForm, setEditForm] = useState({ service: "", plan: "", amount: "", billingCycle: "monthly", status: "active", renewalDate: "" });
+
 	useEffect(() => {
 		fetchSubscriptions();
 	}, [fetchSubscriptions]);
+
+	useEffect(() => {
+		if (editing) {
+			setEditForm({
+				service: editing.service || "",
+				plan: editing.plan || "",
+				amount: editing.amount != null ? String(editing.amount) : "",
+				billingCycle: editing.billingCycle || "monthly",
+				status: editing.status || "active",
+				renewalDate: editing.renewalDate || "",
+			});
+		}
+	}, [editing]);
+
+	async function handleEditSave() {
+		if (!editing?.id) return setEditing(null);
+		const amountValue = editForm.amount ? parseFloat(editForm.amount) : undefined;
+		await updateSubscription(editing.id, {
+			service: editForm.service,
+			plan: editForm.plan || null,
+			amount: amountValue,
+			billingCycle: editForm.billingCycle,
+			status: editForm.status,
+			renewalDate: editForm.renewalDate,
+		});
+		setEditing(null);
+	}
+
+	async function handleConfirmCancel() {
+		if (!confirmCancel?.id) return setConfirmCancel(null);
+		await cancelSubscription(confirmCancel.id);
+		setConfirmCancel(null);
+	}
 
 	const filtered = useMemo(() => {
 		return subscriptions.filter((s) => {
@@ -63,6 +112,7 @@ export default function SubscriptionsPage() {
 	}, [subscriptions, query, status, billingCycle]);
 
 	return (
+		<>
 		<div className="space-y-6 pt-4 md:pt-6">
 			{/* Page title */}
 			<div className="flex items-center justify-between">
@@ -186,9 +236,9 @@ export default function SubscriptionsPage() {
 												<DropdownMenuContent align="end" className="w-40">
 													<DropdownMenuLabel>Actions</DropdownMenuLabel>
 													<DropdownMenuSeparator />
-													<DropdownMenuItem>View</DropdownMenuItem>
-													<DropdownMenuItem>Edit</DropdownMenuItem>
-													<DropdownMenuItem className="text-red-600">Cancel</DropdownMenuItem>
+													<DropdownMenuItem onClick={() => setViewing(s)}>View</DropdownMenuItem>
+													<DropdownMenuItem onClick={() => setEditing(s)}>Edit</DropdownMenuItem>
+													<DropdownMenuItem className="text-red-600" onClick={() => setConfirmCancel(s)}>Cancel</DropdownMenuItem>
 												</DropdownMenuContent>
 											</DropdownMenu>
 										</TableCell>
@@ -199,5 +249,95 @@ export default function SubscriptionsPage() {
 				</Table>
 			</div>
 		</div>
+
+		{/* View dialog */}
+		<Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Subscription details</DialogTitle>
+				</DialogHeader>
+				{viewing ? (
+					<div className="grid gap-2 text-sm">
+						<div><span className="text-muted-foreground">Service:</span> {viewing.service}</div>
+						<div><span className="text-muted-foreground">Plan:</span> {viewing.plan || "-"}</div>
+						<div><span className="text-muted-foreground">Amount:</span> {viewing.amount != null ? `$${typeof viewing.amount === "number" ? viewing.amount.toFixed(2) : viewing.amount}` : "-"}</div>
+						<div><span className="text-muted-foreground">Billing:</span> {viewing.billingCycle || "-"}</div>
+						<div><span className="text-muted-foreground">Status:</span> {viewing.status || "-"}</div>
+						<div><span className="text-muted-foreground">Next renewal:</span> {viewing.renewalDate ? new Date(viewing.renewalDate as string).toLocaleDateString() : "-"}</div>
+					</div>
+				) : null}
+			</DialogContent>
+		</Dialog>
+
+		{/* Edit dialog */}
+		<Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Edit subscription</DialogTitle>
+				</DialogHeader>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+					<div>
+						<Label className="text-sm">Service</Label>
+						<Input value={editForm.service} onChange={(e) => setEditForm({ ...editForm, service: e.target.value })} />
+					</div>
+					<div>
+						<Label className="text-sm">Plan</Label>
+						<Input value={editForm.plan} onChange={(e) => setEditForm({ ...editForm, plan: e.target.value })} />
+					</div>
+					<div>
+						<Label className="text-sm">Amount (USD)</Label>
+						<Input type="number" step="0.01" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
+					</div>
+					<div>
+						<Label className="text-sm">Billing Cycle</Label>
+						<Select value={editForm.billingCycle} onValueChange={(v) => setEditForm({ ...editForm, billingCycle: v })}>
+							<SelectTrigger><SelectValue placeholder="Monthly" /></SelectTrigger>
+							<SelectContent>
+								<SelectItem value="weekly">Weekly</SelectItem>
+								<SelectItem value="monthly">Monthly</SelectItem>
+								<SelectItem value="quarterly">Quarterly</SelectItem>
+								<SelectItem value="yearly">Yearly</SelectItem>
+								<SelectItem value="custom">Custom</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+					<div>
+						<Label className="text-sm">Status</Label>
+						<Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+							<SelectTrigger><SelectValue placeholder="Active" /></SelectTrigger>
+							<SelectContent>
+								<SelectItem value="active">Active</SelectItem>
+								<SelectItem value="trial">Trial</SelectItem>
+								<SelectItem value="paused">Paused</SelectItem>
+								<SelectItem value="canceled">Canceled</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+					<div>
+						<Label className="text-sm">Next Renewal</Label>
+						<Input type="date" value={editForm.renewalDate} onChange={(e) => setEditForm({ ...editForm, renewalDate: e.target.value })} />
+					</div>
+				</div>
+				<div className="flex justify-end gap-2">
+					<Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+					<Button onClick={handleEditSave}>Save</Button>
+				</div>
+			</DialogContent>
+		</Dialog>
+
+		{/* Cancel confirm */}
+		<Dialog open={!!confirmCancel} onOpenChange={(o) => !o && setConfirmCancel(null)}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Cancel subscription?</DialogTitle>
+				</DialogHeader>
+				<div className="text-sm text-muted-foreground">This will permanently delete this subscription.</div>
+				<div className="flex justify-end gap-2">
+					<Button variant="outline" onClick={() => setConfirmCancel(null)}>Keep</Button>
+					<Button variant="destructive" onClick={handleConfirmCancel}>Delete</Button>
+				</div>
+			</DialogContent>
+		</Dialog>
+		</>
 	);
 }

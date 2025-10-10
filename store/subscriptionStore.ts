@@ -13,7 +13,7 @@ type Subscription = {
 
 type SubscriptionState = {
   subscriptions: Subscription[];
-  loading: "idle" | "fetching" | "creating";
+  loading: "idle" | "fetching" | "creating" | "updating" | "deleting";
   error: string | null;
   isModalOpen: boolean;
   monthlyExpenditure: number;
@@ -27,6 +27,11 @@ type SubscriptionActions = {
   createSubscription: (
     newSubscription: Omit<Subscription, "id">
   ) => Promise<void>;
+  updateSubscription: (
+    id: string,
+    updates: Partial<Omit<Subscription, "id">>
+  ) => Promise<boolean>;
+  cancelSubscription: (id: string) => Promise<boolean>;
   getMonthlyExpenditure: () => Promise<void>;
   getActiveSubscriptions: () => Promise<void>;
 };
@@ -90,6 +95,54 @@ export const useSubscriptionStore = create<
     } catch (err) {
       console.error(err);
       toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      set({ loading: "idle" });
+    }
+  },
+  updateSubscription: async (id, updates) => {
+    set({ loading: "updating" });
+    try {
+      const res = await fetch(`/api/subscriptions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data?.error || "Failed to update");
+        set({ loading: "idle" });
+        return false;
+      }
+      toast.success("Subscription updated");
+      await get().fetchSubscriptions();
+      await get().getMonthlyExpenditure();
+      return true;
+    } catch (err) {
+      console.error(err);
+      toast.error("An unexpected error occurred. Please try again.");
+      return false;
+    } finally {
+      set({ loading: "idle" });
+    }
+  },
+  cancelSubscription: async (id) => {
+    set({ loading: "deleting" });
+    try {
+      const res = await fetch(`/api/subscriptions/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data?.error || "Failed to cancel");
+        set({ loading: "idle" });
+        return false;
+      }
+      toast.success("Subscription canceled");
+      await get().fetchSubscriptions();
+      await get().getMonthlyExpenditure();
+      return true;
+    } catch (err) {
+      console.error(err);
+      toast.error("An unexpected error occurred. Please try again.");
+      return false;
     } finally {
       set({ loading: "idle" });
     }
