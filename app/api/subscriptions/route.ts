@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { subscription } from "@/db/schema";
+import { subscriptions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,8 +14,8 @@ export async function GET() {
     // Fetch subscriptions for the current user
     const userSubscriptions = await db
       .select()
-      .from(subscription)
-      .where(eq(subscription.userId, userId));
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId));
 
     return NextResponse.json({ subscriptions: userSubscriptions });
   } catch (error) {
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
 
     const insertResult = await db
-      .insert(subscription)
+      .insert(subscriptions)
       .values({
         userId,
         service,

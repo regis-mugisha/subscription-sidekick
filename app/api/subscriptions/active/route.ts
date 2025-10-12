@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { subscription } from "@/db/schema";
+import { subscriptions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -13,9 +13,12 @@ export async function GET() {
 
     const activeSubscriptions = await db
       .select()
-      .from(subscription)
+      .from(subscriptions)
       .where(
-        and(eq(subscription.userId, userId), eq(subscription.status, "active"))
+        and(
+          eq(subscriptions.userId, userId),
+          eq(subscriptions.status, "active")
+        )
       );
 
     return NextResponse.json({ subscriptions: activeSubscriptions });

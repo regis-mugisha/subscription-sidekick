@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { subscription } from "@/db/schema";
+import { subscriptions } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
 import { eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -14,10 +14,10 @@ export async function GET() {
     // Fetch total monthly amount for the current user
     const monthlyTotal = sql<number>`
     CASE
-        WHEN ${subscription.billingCycle} = 'monthly' THEN (${subscription.amount})
-        WHEN ${subscription.billingCycle} = 'weekly' THEN ((${subscription.amount} * 52) / 12)
-        WHEN ${subscription.billingCycle} = 'quarterly' THEN (${subscription.amount} / 3)
-        WHEN ${subscription.billingCycle} = 'yearly' THEN (${subscription.amount} / 12)
+      WHEN ${subscriptions.billingCycle} = 'monthly' THEN (${subscriptions.amount})
+        WHEN ${subscriptions.billingCycle} = 'weekly' THEN ((${subscriptions.amount} * 52) / 12)
+        WHEN ${subscriptions.billingCycle} = 'quarterly' THEN (${subscriptions.amount} / 3)
+        WHEN ${subscriptions.billingCycle} = 'yearly' THEN (${subscriptions.amount} / 12)
         ELSE 0
     END
 `;
@@ -28,8 +28,8 @@ export async function GET() {
           "monthlyExpenditure"
         ),
       })
-      .from(subscription)
-      .where(eq(subscription.userId, userId));
+      .from(subscriptions)
+      .where(eq(subscriptions.userId, userId));
 
     const monthlySpend = parseFloat(result[0]?.monthlyExpenditure || "0");
 
