@@ -416,7 +416,7 @@ export default function Dashboard() {
                               </div>
                             </div>
                             {daysAway <= 0 ? (
-                              <Badge variant="destructive">expired</Badge>
+                              <Badge variant="destructive">missed out</Badge>
                             ) : (
                               <div className="text-sm">
                                 in {daysAway} {daysAway == 1 ? "day" : "days"}
