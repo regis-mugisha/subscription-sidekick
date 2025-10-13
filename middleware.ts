@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher("/");
 export default clerkMiddleware(async (auth, req) => {
+  const url = new URL(req.url);
+
+  if (url.pathname === "/api/cron") {
+    return NextResponse.next();
+  }
   const { userId } = await auth();
 
   if (userId && isPublicRoute(req)) {
@@ -20,6 +25,6 @@ export const config = {
     // Skip Next.js internals and all static files, unless found in search params
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
-    "/(api|trpc)(?!/cron)(.*)",
+    "/(api|trpc)(.*)",
   ],
 };
