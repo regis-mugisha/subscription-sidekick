@@ -1,24 +1,27 @@
 import { db } from "@/db/drizzle";
 import { subscriptions } from "@/db/schema";
-import { auth } from "@clerk/nextjs/server";
 import { addMonths, addWeeks, addYears } from "date-fns";
-import { and, eq, lte } from "drizzle-orm";
+import { and, eq, lte, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const today = new Date();
 
     const dueSubscriptions = await db
       .select()
       .from(subscriptions)
       .where(
         and(
-          eq(subscriptions.userId, userId),
-          lte(subscriptions.renewalDate, new Date().toISOString().split("T")[0])
+          lte(subscriptions.renewalDate, today.toISOString().split("T")[0]),
+          or(
+            eq(subscriptions.status, "active"),
+            eq(subscriptions.status, "trial")
+          )
         )
       );
 
@@ -28,22 +31,28 @@ export async function GET() {
 
     for (const sub of dueSubscriptions) {
       let newRenewalDate = new Date(sub.renewalDate);
-      switch (sub.billingCycle) {
-        case "weekly":
-          newRenewalDate = addWeeks(newRenewalDate, 1);
-          break;
-        case "monthly":
-          newRenewalDate = addMonths(newRenewalDate, 1);
-          break;
-        case "quarterly":
-          newRenewalDate = addMonths(newRenewalDate, 3);
-          break;
-        case "yearly":
-          newRenewalDate = addYears(newRenewalDate, 1);
-          break;
-        default:
-          continue;
+      while (newRenewalDate <= today) {
+        switch (sub.billingCycle) {
+          case "weekly":
+            newRenewalDate = addWeeks(newRenewalDate, 1);
+            break;
+          case "monthly":
+            newRenewalDate = addMonths(newRenewalDate, 1);
+            break;
+          case "quarterly":
+            newRenewalDate = addMonths(newRenewalDate, 3);
+            break;
+          case "yearly":
+            newRenewalDate = addYears(newRenewalDate, 1);
+            break;
+          default:
+            // Break the loop for 'custom' or unknown cycles
+            newRenewalDate = new Date("9999-12-31"); // A fail-safe to exit the loop
+            continue;
+        }
       }
+
+      if (newRenewalDate.getFullYear() === 9999) continue;
 
       const newStatus = sub.status === "trial" ? "active" : sub.status;
       await db
