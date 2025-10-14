@@ -9,7 +9,8 @@ export function ProblemSolution() {
             <CardTitle>We all forget free trials and renewals</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground">
-            Free trials end silently. Small monthly charges add up. Manually tracking renewals is tedious—and expensive when you forget.
+            Free trials end silently. Small monthly charges add up. Manually
+            tracking renewals is tedious—and expensive when you forget.
           </CardContent>
         </Card>
         <Card>
@@ -17,7 +18,8 @@ export function ProblemSolution() {
             <CardTitle>Subscription Sidekick fixes that</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground">
-            Add your subscriptions once. See clear monthly/annual totals. Get email and in-app reminders 3 days before renewals and trial endings.
+            Add your subscriptions once. See clear monthly/annual totals. Get
+            in-app reminders 7 days before renewals and trial endings.
           </CardContent>
         </Card>
       </div>
@@ -26,5 +28,3 @@ export function ProblemSolution() {
 }
 
 export default ProblemSolution;
-
-
