@@ -1,16 +1,10 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const jetMono = JetBrains_Mono({
-  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -28,7 +22,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${inter.variable} ${jetMono.variable} antialiased`}>
+        <body className={`${inter.className} antialiased`}>
           {children}
           <Toaster position="top-center" />
         </body>
