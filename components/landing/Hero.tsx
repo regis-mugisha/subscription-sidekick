@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { SignUpButton } from "@clerk/nextjs";
+import Image from "next/image";
 
 export function Hero() {
   return (
@@ -28,10 +29,14 @@ export function Hero() {
         </Button>
       </div>
       <div className="mt-12 rounded-xl border bg-card shadow-xl p-3">
-        <div className="aspect-[16/9] w-full rounded-lg bg-muted flex items-center justify-center">
-          <div className="text-muted-foreground">
-            Product preview coming soon
-          </div>
+        <div className="aspect-[16/9] w-full rounded-lg bg-muted flex items-center justify-center relative overflow-hidden">
+          <Image
+            src="/project-preview.png"
+            alt="Live App Preview"
+            width={800}
+            height={800}
+            className="px-6 lg:px-0 object-cover rounded-xl"
+          />
         </div>
       </div>
     </section>
