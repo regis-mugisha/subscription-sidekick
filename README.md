@@ -1,36 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎯 Subscription Sidekick
 
-## Getting Started
+**Stop paying for subscriptions you don't use.**
 
-First, run the development server:
+A smart subscription management app that tracks renewals, sends proactive reminders, and helps you take control of your recurring expenses.
+![Subscription Sidekick Preview](public/project-preview.png)
+
+## ✨ What It Does
+
+- **🔔 Proactive Reminders** - Get notified 7 days before renewals and trial endings
+- **📊 Visual Dashboard** - See monthly/annual totals and spending breakdowns at a glance  
+- **⚡ Quick Setup** - Add subscriptions in seconds with smart defaults
+- **🔒 Your Data, Private** - Secure, account-based access and control
+
+## 🚀 Quick Start
 
 ```bash
+# Clone and install
+git clone https://github.com/regis-mugisha/subscription-sidekick.git
+cd subscription-sidekick
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Add your Clerk and Neon database credentials
+
+# Run the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see it in action.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Built With
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Next.js 15** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **Clerk** - Authentication & user management
+- **Drizzle ORM** - Type-safe database queries
+- **Neon** - Serverless PostgreSQL
+- **Zustand** - Lightweight state management
+- **Radix UI** - Accessible component primitives
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+├── app/                    # Next.js App Router
+│   ├── (protected)/       # Authenticated routes
+│   │   ├── dashboard/     # Main dashboard
+│   │   ├── subscriptions/ # Subscription management
+│   │   ├── analytics/     # Spending analytics
+│   │   └── renewals/      # Upcoming renewals
+│   └── api/               # API routes
+├── components/            # Reusable components
+│   ├── landing/          # Landing page sections
+│   ├── layout/           # App layout components
+│   └── ui/               # Base UI components
+├── db/                   # Database schema & migrations
+└── store/                # Zustand state management
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Dashboard
+- Monthly/annual spending overview
+- Upcoming renewals timeline
+- Quick subscription management
 
-## Deploy on Vercel
+### Subscription Management
+- Add/edit/cancel subscriptions
+- Filter by status, billing cycle, or search
+- Track trial periods and renewal dates
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Analytics
+- Visual spending breakdowns
+- Usage scoring for optimization
+- Historical spending trends
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Vercel Cronjob
+- Update renewal dates for subscriptions that reach their expiry date.
+
+## 🔧 Development
+
+```bash
+# Development with Turbopack
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Run linting
+npm run lint
+```
+
+## 📝 Environment Variables
+
+```env
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_key
+CLERK_SECRET_KEY=your_clerk_secret
+DATABASE_URL=your_neon_database_url
+CRON_SECRET=your_random_cron_secret_here
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Currently in Beta** - Free to use while we gather feedback and improve the experience.
