@@ -1,3 +1,4 @@
+import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -21,10 +22,12 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body className={`${inter.className} antialiased`}>
-          {children}
-          <Toaster position="top-center" />
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+            <Toaster position="top-center" />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

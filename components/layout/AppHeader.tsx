@@ -5,6 +5,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useSubscriptionStore } from "@/store/subscriptionStore";
 import { UserButton } from "@clerk/nextjs";
 import { Plus } from "lucide-react";
+import { ModeToggle } from "../mode-toggle";
 
 export default function AppHeader() {
   const { openModal } = useSubscriptionStore();
@@ -13,6 +14,7 @@ export default function AppHeader() {
     <div className="flex items-center h-16 px-4 border-b">
       <SidebarTrigger />
       <div className="ml-auto flex items-center gap-3">
+        <ModeToggle />
         <Button onClick={openModal}>
           <Plus className="mr-2 h-4 w-4" />
           New Subscription
